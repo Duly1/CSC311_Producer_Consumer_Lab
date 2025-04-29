@@ -1,18 +1,26 @@
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class ProducerConsumerDriver {
     private static final int MAX_QUEUE_CAPACITY = 5;
+    private static volatile boolean running = true;
 
     public static void demoSingleProducerAndSingleConsumer() {
         DataQueue dataQueue = new DataQueue(MAX_QUEUE_CAPACITY);
 
         Producer producer = new Producer(dataQueue);
-        Thread producerThread = new Thread(producer);
+        Thread producerThread = new Thread(() -> {
+            while (running) {
+                producer.run();
+            }
+        });
 
         Consumer consumer = new Consumer(dataQueue);
-        Thread consumerThread = new Thread(consumer);
+        Thread consumerThread = new Thread(() -> {
+            while (running) {
+                consumer.run();
+            }
+        });
 
         producerThread.start();
         consumerThread.start();
@@ -25,8 +33,7 @@ public class ProducerConsumerDriver {
         MyThread.sleep(2000);
 
         // stop threads
-        producer.stop();
-        consumer.stop();
+        running = false;
 
         MyThread.waitForAllThreadsToComplete(threads);
     }
@@ -36,31 +43,34 @@ public class ProducerConsumerDriver {
         int producerCount = 5;
         int consumerCount = 5;
         List<Thread> threads = new ArrayList<>();
-        List<Producer> producers = new ArrayList<>();
-        List<Consumer> consumers = new ArrayList<>();
 
-        for(int i = 0; i < producerCount; i++) {
+        for (int i = 0; i < producerCount; i++) {
             Producer producer = new Producer(dataQueue);
-            Thread producerThread = new Thread(producer);
+            Thread producerThread = new Thread(() -> {
+                while (running) {
+                    producer.run();
+                }
+            });
             producerThread.start();
             threads.add(producerThread);
-            producers.add(producer);
         }
 
-        for(int i = 0; i < consumerCount; i++) {
+        for (int i = 0; i < consumerCount; i++) {
             Consumer consumer = new Consumer(dataQueue);
-            Thread consumerThread = new Thread(consumer);
+            Thread consumerThread = new Thread(() -> {
+                while (running) {
+                    consumer.run();
+                }
+            });
             consumerThread.start();
             threads.add(consumerThread);
-            consumers.add(consumer);
         }
 
         // let threads run for ten seconds
         MyThread.sleep(10000);
 
         // stop threads
-        consumers.forEach(Consumer::stop);
-        producers.forEach(Producer::stop);
+        running = false;
 
         MyThread.waitForAllThreadsToComplete(threads);
     }
